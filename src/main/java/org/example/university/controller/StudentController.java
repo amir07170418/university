@@ -4,10 +4,10 @@ import jakarta.validation.Valid;
 import org.example.university.dto.StudentRequest;
 import org.example.university.dto.StudentResponse;
 import org.example.university.service.StudentService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/students")
@@ -17,9 +17,39 @@ public class StudentController {
     public StudentController(StudentService studentService) {
         this.studentService = studentService;
     }
-    @PostMapping("/register")
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping
     public StudentResponse register(@Valid @RequestBody StudentRequest studentRequest) {
         return  studentService.save(studentRequest);
     }
-
+    @PreAuthorize("hasRole('STUDENT')")
+    @GetMapping("/me")
+    public StudentResponse me() {
+        return studentService.getMe();
+    }
+    @PreAuthorize("hasAllRoles('ADMIN','PROFESSOR')")
+    @GetMapping("/{id}")
+    public StudentResponse findById(@PathVariable Long id) {
+        return studentService.findById(id);
+    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping
+    public Page<StudentResponse> findAll(@Valid Pageable pageable) {
+        return studentService.findAll(pageable);
+    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @PutMapping("/{id}")
+    public StudentResponse update(@PathVariable Long id, @Valid @RequestBody StudentRequest studentRequest) {
+        return studentService.update(id, studentRequest);
+    }
+    @PreAuthorize("hasRole('STUDENT')")
+    @PutMapping
+    public StudentResponse updateMe(@Valid @RequestBody StudentRequest studentRequest) {
+        return  studentService.updateMe(studentRequest);
+    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/{id}")
+    public void delete(@PathVariable Long id) {
+        studentService.delete(id);
+    }
 }

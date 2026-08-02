@@ -13,6 +13,7 @@ import org.example.university.repository.DepartmentRepository;
 import org.example.university.repository.StudentRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -44,25 +45,8 @@ public class StudentService implements UniversityServices<StudentRequest, Studen
     @Override
     public StudentResponse update(Long id, StudentRequest request) {
         Student student=studentRepository.findById(id).orElseThrow(()->new StudentNotFoundException());
-        if (!student.getEmail().equals(request.getEmail()) && studentRepository.existsByEmail(request.getEmail())) {
-            throw new UserWithThisEmailExistException();
-        }
-        if (!student.getStudentNumber().equals(request.getStudentNumber()) &&
-                studentRepository.existsByStudentNumber(request.getStudentNumber())) {
-            throw  new StudentAlreadyExistException();
-        }
-        Department department=departmentRepository.findById(request.getDepartmentId())
-                .orElseThrow(()->new DepartmentNotFoundException());
-        student.setFirstName(request.getFirstName());
-        student.setLastName(request.getLastName());
-        student.setEmail(request.getEmail());
-        student.setStudentNumber(request.getStudentNumber());
-        student.setPassword(passwordEncoder.encode(request.getPassword()));
-        student.setEntranceYear(request.getEntranceYear());
-        student.setDepartment(department);
-        student.setId(id);
-        studentRepository.save(student);
-        return studentToResponse(student);
+        chekStudent(student,request);
+        return updateStudent(student,request);
     }
 
     @Override
@@ -83,6 +67,23 @@ public class StudentService implements UniversityServices<StudentRequest, Studen
         Page<Student> students=studentRepository.findAll(pageable);
         return students.map(this::studentToResponse);
     }
+    public StudentResponse getMe(){
+        String email= SecurityContextHolder.getContext().getAuthentication().getName();
+        Student student=studentRepository.findByEmail(email);
+        if (student!=null){
+            return studentToResponse(student);
+        }
+        throw new StudentNotFoundException();
+    }
+    public StudentResponse updateMe(StudentRequest request) {
+        String email= SecurityContextHolder.getContext().getAuthentication().getName();
+        Student student=studentRepository.findByEmail(email);
+        if (student!=null) {
+            chekStudent(student,request);
+            return updateStudent(student,request);
+        }
+        throw new StudentNotFoundException();
+    }
     private Student requestToStudent(StudentRequest studentRequest) {
         Student student = new Student();
         Department department = departmentRepository.findById(studentRequest.getDepartmentId())
@@ -96,6 +97,28 @@ public class StudentService implements UniversityServices<StudentRequest, Studen
         student.setRole(Role.STUDENT);
         student.setEntranceYear(studentRequest.getEntranceYear());
         return student;
+    }
+    private void chekStudent(Student student,StudentRequest request) {
+        if (!student.getEmail().equals(request.getEmail()) && studentRepository.existsByEmail(request.getEmail())) {
+            throw new UserWithThisEmailExistException();
+        }
+        if (!student.getStudentNumber().equals(request.getStudentNumber()) &&
+                studentRepository.existsByStudentNumber(request.getStudentNumber())) {
+            throw new StudentAlreadyExistException();
+        }
+    }
+    private StudentResponse updateStudent(Student student, StudentRequest request) {
+        Department department = departmentRepository.findById(request.getDepartmentId())
+                .orElseThrow(() -> new DepartmentNotFoundException());
+        student.setFirstName(request.getFirstName());
+        student.setLastName(request.getLastName());
+        student.setEmail(request.getEmail());
+        student.setStudentNumber(request.getStudentNumber());
+        student.setPassword(passwordEncoder.encode(request.getPassword()));
+        student.setEntranceYear(request.getEntranceYear());
+        student.setDepartment(department);
+        studentRepository.save(student);
+        return studentToResponse(student);
     }
     private StudentResponse studentToResponse(Student student) {
         StudentResponse studentResponse = new StudentResponse();

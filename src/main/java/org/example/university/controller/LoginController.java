@@ -6,6 +6,7 @@ import org.example.university.security.JwtResponse;
 import org.example.university.service.EmployeeService;
 import org.example.university.service.ProfessorService;
 import org.example.university.service.StudentService;
+import org.example.university.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,11 +18,13 @@ public class LoginController {
     private final StudentService studentService;
     private final ProfessorService professorService;
     private final EmployeeService employeeService;
+    private final UserService userService;
 
-    public LoginController(StudentService studentService, ProfessorService professorService, EmployeeService employeeService) {
+    public LoginController(StudentService studentService, ProfessorService professorService, EmployeeService employeeService, UserService userService) {
         this.studentService = studentService;
         this.professorService = professorService;
         this.employeeService = employeeService;
+        this.userService = userService;
     }
 
     @PostMapping("/register")
@@ -37,8 +40,8 @@ public class LoginController {
         return employeeService.save(employeeRequest);
     }
     @PostMapping("/login")
-    public ResponseEntity<JwtResponse> login(){
-
+    public ResponseEntity<JwtResponse> login(UserRequest userRequest) {
+        return userService.login(userRequest);
     }
 
 
