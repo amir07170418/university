@@ -1,5 +1,6 @@
 package org.example.university.service;
 
+import org.example.university.dto.EmployeeRequest;
 import org.example.university.dto.EnrollmentRequest;
 import org.example.university.dto.EnrollmentResponse;
 import org.example.university.exception.*;
@@ -17,13 +18,15 @@ public class EnrollmentService  {
     private final CourseRepository courseRepository;
     private final EnrollmentRepository enrollmentRepository;
     private final ProfessorRepository professorRepository;
+    private final UserRepository userRepository;
 
     public EnrollmentService(StudentRepository studentRepository, CourseRepository courseRepository
-            , EnrollmentRepository enrollmentRepository, ProfessorRepository professorRepository) {
+            , EnrollmentRepository enrollmentRepository, ProfessorRepository professorRepository, UserRepository userRepository) {
         this.studentRepository = studentRepository;
         this.courseRepository = courseRepository;
         this.enrollmentRepository = enrollmentRepository;
         this.professorRepository = professorRepository;
+        this.userRepository = userRepository;
     }
 
     public EnrollmentResponse save(EnrollmentRequest request) {
@@ -42,15 +45,48 @@ public class EnrollmentService  {
         enrollmentRepository.save(enrollment);
         return enrollmentToResponse(enrollment);
     }
+    public EnrollmentResponse saveMe(Long courseId){
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Student student=studentRepository.findByEmail(email);
+        if (student==null){
+            throw new StudentNotFoundException();
+        }
+        EnrollmentRequest enrollmentRequest = new EnrollmentRequest();
+        enrollmentRequest.setCourseId(courseId);
+        enrollmentRequest.setStudentId(student.getId());
+        return  save(enrollmentRequest);
+    }
 
     public void delete(Long id) {
         Enrollment enrollment = enrollmentRepository.findById(id).orElseThrow(EnrollmentNotFoundException::new);
-        enrollmentRepository.delete(enrollment);
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email);
+        if (user != null) {
+            if (user.getRole() == Role.ADMIN) {
+                enrollmentRepository.delete(enrollment);
+                return;
+            }else  if (user.getRole() == Role.STUDENT) {
+                if (user.getEmail().equals(enrollment.getStudent().getEmail())) {
+                    enrollmentRepository.delete(enrollment);
+                    return;
+                }
+            }
+        }
+        throw new EnrollmentAccessDeniedException();
     }
 
     public EnrollmentResponse findById(Long id) {
         Enrollment enrollment = enrollmentRepository.findById(id).orElseThrow(EnrollmentNotFoundException::new);
         return enrollmentToResponse(enrollment);
+    }
+    public Page<EnrollmentResponse>findAllMe(Pageable pageable) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email);
+        if (user != null) {
+            Page<Enrollment> page= enrollmentRepository.findAllByEmail(user.getEmail(),pageable);
+            return page.map(this::enrollmentToResponse);
+        }
+        throw new StudentNotFoundException();
     }
 
     public Page<EnrollmentResponse> findAll(Pageable pageable) {

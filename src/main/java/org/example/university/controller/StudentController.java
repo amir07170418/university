@@ -27,7 +27,7 @@ public class StudentController {
     public StudentResponse me() {
         return studentService.getMe();
     }
-    @PreAuthorize("hasAllRoles('ADMIN','PROFESSOR')")
+    @PreAuthorize("hasAnyRole('ADMIN','PROFESSOR')")
     @GetMapping("/{id}")
     public StudentResponse findById(@PathVariable Long id) {
         return studentService.findById(id);

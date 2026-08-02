@@ -1,8 +1,11 @@
 package org.example.university.repository;
 
 import org.example.university.model.Enrollment;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -11,4 +14,6 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     boolean existsByCourseIdAndStudentId(Long courseId, Long studentId);
     @Query("select count(e)>=c.capacity from Enrollment e join e.course c where c.id=:id")
     boolean capacityFull(Long id);
+    @Query("select e from Enrollment e join e.student s where s.email=:email")
+    Page<Enrollment>  findAllByEmail(@Param("email") String email, Pageable pageable);
 }

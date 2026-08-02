@@ -27,15 +27,15 @@ public class LoginController {
         this.userService = userService;
     }
 
-    @PostMapping("/register")
+    @PostMapping("/register/student")
     public StudentResponse register(@Valid @RequestBody StudentRequest studentRequest) {
         return   studentService.save(studentRequest);
     }
-    @PostMapping("/register")
+    @PostMapping("/register/professor")
     public ProfessorResponse register(@Valid @RequestBody ProfessorRequest professorRequest) {
         return professorService.save(professorRequest);
     }
-    @PostMapping("/register")
+    @PostMapping("/register/employee")
     public EmployeeResponse  register(@Valid @RequestBody EmployeeRequest employeeRequest) {
         return employeeService.save(employeeRequest);
     }

@@ -29,7 +29,9 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(csrf->csrf.disable()).authorizeHttpRequests(auth->auth.anyRequest().permitAll());
+        http.csrf(csrf->csrf.disable()).authorizeHttpRequests(
+                auth->auth.requestMatchers("/login","/register").permitAll()
+                        .anyRequest().authenticated());
         http.exceptionHandling(exc->
                 exc.authenticationEntryPoint(jwtAuthenticationEntryPoint).accessDeniedHandler(jwtAccessDeniedHandler));
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

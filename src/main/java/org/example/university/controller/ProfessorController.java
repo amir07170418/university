@@ -27,7 +27,7 @@ public class ProfessorController {
         return professorService.findById(id);
     }
     @PreAuthorize("hasRole('PROFESSOR')")
-    @GetMapping
+    @GetMapping("/me")
     public ProfessorResponse getMe(){
         return  professorService.getMe();
     }
