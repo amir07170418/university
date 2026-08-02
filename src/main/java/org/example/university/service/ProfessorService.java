@@ -10,8 +10,11 @@ import org.example.university.repository.DepartmentRepository;
 import org.example.university.repository.ProfessorRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
+@Service
 public class ProfessorService implements UniversityServices<ProfessorRequest, ProfessorResponse> {
     private final ProfessorRepository professorRepository;
     private final PasswordEncoder passwordEncoder;
@@ -39,24 +42,8 @@ public class ProfessorService implements UniversityServices<ProfessorRequest, Pr
     @Override
     public ProfessorResponse update(Long id, ProfessorRequest request) {
         Professor professor = professorRepository.findById(id).orElseThrow(ProfessorNotFoundException::new);
-        if (!professor.getEmail().equals(request.getEmail()) && professorRepository.existsByEmail(request.getEmail())) {
-            throw new UserWithThisEmailExistException();
-        }
-        if (!professor.getProfessorNumber().equals(request.getProfessorNumber()) &&
-                professorRepository.existsByProfessorNumber(professor.getProfessorNumber())) {
-            throw  new ProfessorAlreadyExistExceptions();
-        }
-        Department department=departmentRepository.findById(professor.getDepartment().getId())
-                .orElseThrow(DepartmentNotFoundException::new);
-        professor.setProfessorNumber(professor.getProfessorNumber());
-        professor.setEmail(request.getEmail());
-        professor.setPassword(passwordEncoder.encode(request.getPassword()));
-        professor.setFirstName(request.getFirstName());
-        professor.setLastName(request.getLastName());
-        professor.setDepartment(department);
-        professor.setId(id);
-        professorRepository.save(professor);
-        return  professorToResponse(professor);
+        professorCheck(professor, request);
+        return updateProfessor(professor, request);
     }
 
     @Override
@@ -75,6 +62,45 @@ public class ProfessorService implements UniversityServices<ProfessorRequest, Pr
     public Page<ProfessorResponse> findAll(Pageable pageable) {
         Page<Professor> professors = professorRepository.findAll(pageable);
         return professors.map(this::professorToResponse);
+    }
+    public ProfessorResponse getMe(){
+        String  email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Professor professor = professorRepository.findByEmail(email);
+        if (professor != null) {
+            return   professorToResponse(professor);
+        }
+        throw new ProfessorNotFoundException();
+    }
+    public ProfessorResponse updateMe(ProfessorRequest request){
+        String  email = SecurityContextHolder.getContext().getAuthentication().getName();
+        Professor professor = professorRepository.findByEmail(email);
+        if (professor != null) {
+            professorCheck(professor, request);
+            return updateProfessor(professor, request);
+        }
+        throw new ProfessorNotFoundException();
+    }
+
+    private void professorCheck(Professor professor,ProfessorRequest request) {
+        if (!professor.getEmail().equals(request.getEmail()) && professorRepository.existsByEmail(request.getEmail())) {
+            throw new UserWithThisEmailExistException();
+        }
+        if (!professor.getProfessorNumber().equals(request.getProfessorNumber()) &&
+                professorRepository.existsByProfessorNumber(professor.getProfessorNumber())) {
+            throw  new ProfessorAlreadyExistExceptions();
+        }
+    }
+    private ProfessorResponse updateProfessor(Professor professor, ProfessorRequest request) {
+        Department department=departmentRepository.findById(professor.getDepartment().getId())
+                .orElseThrow(DepartmentNotFoundException::new);
+        professor.setProfessorNumber(professor.getProfessorNumber());
+        professor.setEmail(request.getEmail());
+        professor.setPassword(passwordEncoder.encode(request.getPassword()));
+        professor.setFirstName(request.getFirstName());
+        professor.setLastName(request.getLastName());
+        professor.setDepartment(department);
+        professorRepository.save(professor);
+        return  professorToResponse(professor);
     }
     private Professor requestToProfessor(ProfessorRequest request) {
         Professor professor = new Professor();
