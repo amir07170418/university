@@ -1,5 +1,6 @@
 package org.example.university.controller;
 
+import jakarta.validation.Valid;
 import org.example.university.dto.EmployeeRequest;
 import org.example.university.dto.EmployeeResponse;
 import org.example.university.service.EmployeeService;
@@ -27,12 +28,12 @@ public class EmployeeController {
     }
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public  EmployeeResponse save(@RequestBody EmployeeRequest employeeRequest) {
+    public  EmployeeResponse save(@Valid @RequestBody EmployeeRequest employeeRequest) {
         return employeeService.save(employeeRequest);
     }
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/{id}")
-    public EmployeeResponse update(@PathVariable Long id, @RequestBody EmployeeRequest employeeRequest) {
+    public EmployeeResponse update(@PathVariable Long id,@Valid @RequestBody EmployeeRequest employeeRequest) {
         return employeeService.update(id, employeeRequest);
     }
     @PreAuthorize("hasRole('ADMIN')")

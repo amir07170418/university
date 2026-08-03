@@ -51,7 +51,6 @@ public class CourseService implements UniversityServices<CourseRequest, CourseRe
         course.setTitle(request.getTitle());
         course.setUnits(request.getUnits());
         course.setCapacity(request.getCapacity());
-        course.setId(id);
         course.setProfessor(professor);
         course.setCode(request.getCode());
         courseRepository.save(course);

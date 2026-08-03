@@ -117,7 +117,6 @@ public class Course {
                 ", code='" + code + '\'' +
                 ", units=" + units +
                 ", capacity=" + capacity +
-                ", professorId=" + professor.getId() +
                 '}';
     }
 }

@@ -26,7 +26,6 @@ public class LoginController {
         this.employeeService = employeeService;
         this.userService = userService;
     }
-
     @PostMapping("/register/student")
     public StudentResponse register(@Valid @RequestBody StudentRequest studentRequest) {
         return   studentService.save(studentRequest);
@@ -40,7 +39,7 @@ public class LoginController {
         return employeeService.save(employeeRequest);
     }
     @PostMapping("/login")
-    public ResponseEntity<JwtResponse> login(UserRequest userRequest) {
+    public ResponseEntity<JwtResponse> login(@Valid @RequestBody UserRequest userRequest) {
         return userService.login(userRequest);
     }
 

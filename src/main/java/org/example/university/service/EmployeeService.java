@@ -79,7 +79,7 @@ public class EmployeeService implements  UniversityServices<EmployeeRequest, Emp
         employee.setFirstName(request.getFirstName());
         employee.setLastName(request.getLastName());
         employee.setEmail(request.getEmail());
-        employee.setPassword(request.getPassword());
+        employee.setPassword(passwordEncoder.encode(request.getPassword()));
         employee.setRole(Role.ADMIN);
         employee.setEmployeeNumber(request.getEmployeeNumber());
         return employee;

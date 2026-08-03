@@ -86,7 +86,7 @@ public class ProfessorService implements UniversityServices<ProfessorRequest, Pr
             throw new UserWithThisEmailExistException();
         }
         if (!professor.getProfessorNumber().equals(request.getProfessorNumber()) &&
-                professorRepository.existsByProfessorNumber(professor.getProfessorNumber())) {
+                professorRepository.existsByProfessorNumber(request.getProfessorNumber())) {
             throw  new ProfessorAlreadyExistExceptions();
         }
     }
