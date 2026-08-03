@@ -3,6 +3,7 @@ package org.example.university.service;
 import org.example.university.dto.ProfessorRequest;
 import org.example.university.dto.ProfessorResponse;
 import org.example.university.exception.*;
+import org.example.university.mapper.ProfessorMapper;
 import org.example.university.model.Department;
 import org.example.university.model.Professor;
 import org.example.university.model.Role;
@@ -19,11 +20,13 @@ public class ProfessorService implements UniversityServices<ProfessorRequest, Pr
     private final ProfessorRepository professorRepository;
     private final PasswordEncoder passwordEncoder;
     private final DepartmentRepository departmentRepository;
+    private final ProfessorMapper professorMapper;
 
-    public ProfessorService(ProfessorRepository professorRepository, PasswordEncoder passwordEncoder, DepartmentRepository departmentRepository) {
+    public ProfessorService(ProfessorRepository professorRepository, PasswordEncoder passwordEncoder, DepartmentRepository departmentRepository, ProfessorMapper professorMapper) {
         this.professorRepository = professorRepository;
         this.passwordEncoder = passwordEncoder;
         this.departmentRepository = departmentRepository;
+        this.professorMapper = professorMapper;
     }
 
     @Override
@@ -36,7 +39,7 @@ public class ProfessorService implements UniversityServices<ProfessorRequest, Pr
         }
         Professor professor = requestToProfessor(request);
         professorRepository.save(professor);
-        return  professorToResponse(professor);
+        return  professorMapper.toResponse(professor);
     }
 
     @Override
@@ -55,19 +58,19 @@ public class ProfessorService implements UniversityServices<ProfessorRequest, Pr
     @Override
     public ProfessorResponse findById(Long id) {
         Professor professor = professorRepository.findById(id).orElseThrow(ProfessorNotFoundException::new);
-        return  professorToResponse(professor);
+        return  professorMapper.toResponse(professor);
     }
 
     @Override
     public Page<ProfessorResponse> findAll(Pageable pageable) {
         Page<Professor> professors = professorRepository.findAll(pageable);
-        return professors.map(this::professorToResponse);
+        return professors.map(professorMapper::toResponse);
     }
     public ProfessorResponse getMe(){
         String  email = SecurityContextHolder.getContext().getAuthentication().getName();
         Professor professor = professorRepository.findByEmail(email);
         if (professor != null) {
-            return   professorToResponse(professor);
+            return   professorMapper.toResponse(professor);
         }
         throw new ProfessorNotFoundException();
     }
@@ -91,38 +94,21 @@ public class ProfessorService implements UniversityServices<ProfessorRequest, Pr
         }
     }
     private ProfessorResponse updateProfessor(Professor professor, ProfessorRequest request) {
-        Department department=departmentRepository.findById(professor.getDepartment().getId())
+        Department department=departmentRepository.findById(request.getDepartmentId())
                 .orElseThrow(DepartmentNotFoundException::new);
-        professor.setProfessorNumber(professor.getProfessorNumber());
-        professor.setEmail(request.getEmail());
+        professorMapper.updateProfessorFromRequest(request,professor);
         professor.setPassword(passwordEncoder.encode(request.getPassword()));
-        professor.setFirstName(request.getFirstName());
-        professor.setLastName(request.getLastName());
         professor.setDepartment(department);
         professorRepository.save(professor);
-        return  professorToResponse(professor);
+        return  professorMapper.toResponse(professor);
     }
     private Professor requestToProfessor(ProfessorRequest request) {
-        Professor professor = new Professor();
+        Professor professor = professorMapper.toProfessor(request);
         Department  department = departmentRepository.findById(request.getDepartmentId()).orElseThrow(DepartmentNotFoundException::new);
-        professor.setFirstName(request.getFirstName());
-        professor.setLastName(request.getLastName());
-        professor.setEmail(request.getEmail());
         professor.setPassword(passwordEncoder.encode(request.getPassword()));
-        professor.setProfessorNumber(request.getProfessorNumber());
         professor.setDepartment(department);
         professor.setRole(Role.PROFESSOR);
         return professor;
-    }
-    private ProfessorResponse professorToResponse(Professor professor) {
-        ProfessorResponse professorResponse = new ProfessorResponse();
-        professorResponse.setFirstName(professor.getFirstName());
-        professorResponse.setLastName(professor.getLastName());
-        professorResponse.setEmail(professor.getEmail());
-        professorResponse.setId(professor.getId());
-        professorResponse.setDepartmentId(professor.getDepartment().getId());
-        professorResponse.setProfessorNumber(professor.getProfessorNumber());
-        return professorResponse;
     }
 }
 

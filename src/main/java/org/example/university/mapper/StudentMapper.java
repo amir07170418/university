@@ -11,6 +11,10 @@ import org.mapstruct.MappingTarget;
 public interface StudentMapper {
     @Mapping(source = "department.id",target = "departmentId")
     StudentResponse studentToResponse(Student student);
+    @Mapping(target = "department",ignore = true)
     Student requestToStudent(StudentRequest studentRequest);
+    @Mapping(target = "department",ignore = true)
+    @Mapping(target = "password",ignore = true)
+    @Mapping(target = "role" ,ignore = true)
     void updateStudentFromRequest(StudentRequest studentRequest, @MappingTarget Student student);
 }
