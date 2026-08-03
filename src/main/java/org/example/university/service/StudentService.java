@@ -6,6 +6,7 @@ import org.example.university.exception.DepartmentNotFoundException;
 import org.example.university.exception.StudentAlreadyExistException;
 import org.example.university.exception.StudentNotFoundException;
 import org.example.university.exception.UserWithThisEmailExistException;
+import org.example.university.mapper.StudentMapper;
 import org.example.university.model.Department;
 import org.example.university.model.Role;
 import org.example.university.model.Student;
@@ -22,11 +23,13 @@ public class StudentService implements UniversityServices<StudentRequest, Studen
     private final PasswordEncoder passwordEncoder;
     private final StudentRepository studentRepository;
     private final DepartmentRepository departmentRepository;
+    private final StudentMapper studentMapper;
 
-    public StudentService(PasswordEncoder passwordEncoder, StudentRepository studentRepository, DepartmentRepository departmentRepository) {
+    public StudentService(PasswordEncoder passwordEncoder, StudentRepository studentRepository, DepartmentRepository departmentRepository, StudentMapper studentMapper) {
         this.passwordEncoder = passwordEncoder;
         this.studentRepository = studentRepository;
         this.departmentRepository = departmentRepository;
+        this.studentMapper = studentMapper;
     }
 
     @Override
@@ -39,7 +42,7 @@ public class StudentService implements UniversityServices<StudentRequest, Studen
         }
         Student student=requestToStudent(request);
         studentRepository.save(student);
-        return studentToResponse(student);
+        return studentMapper.studentToResponse(student);
     }
 
     @Override
@@ -58,20 +61,20 @@ public class StudentService implements UniversityServices<StudentRequest, Studen
     @Override
     public StudentResponse findById(Long id) {
         Student student=studentRepository.findById(id).orElseThrow(()->new StudentNotFoundException());
-        return studentToResponse(student);
+        return studentMapper.studentToResponse(student);
     }
 
 
     @Override
     public Page<StudentResponse> findAll(Pageable pageable) {
         Page<Student> students=studentRepository.findAll(pageable);
-        return students.map(this::studentToResponse);
+        return students.map(studentMapper::studentToResponse);
     }
     public StudentResponse getMe(){
         String email= SecurityContextHolder.getContext().getAuthentication().getName();
         Student student=studentRepository.findByEmail(email);
         if (student!=null){
-            return studentToResponse(student);
+            return studentMapper.studentToResponse(student);
         }
         throw new StudentNotFoundException();
     }
@@ -85,17 +88,12 @@ public class StudentService implements UniversityServices<StudentRequest, Studen
         throw new StudentNotFoundException();
     }
     private Student requestToStudent(StudentRequest studentRequest) {
-        Student student = new Student();
+        Student student = studentMapper.requestToStudent(studentRequest);
         Department department = departmentRepository.findById(studentRequest.getDepartmentId())
                 .orElseThrow(() -> new  DepartmentNotFoundException());
-        student.setFirstName(studentRequest.getFirstName());
-        student.setLastName(studentRequest.getLastName());
-        student.setStudentNumber(studentRequest.getStudentNumber());
-        student.setEmail(studentRequest.getEmail());
         student.setDepartment(department);
         student.setPassword(passwordEncoder.encode(studentRequest.getPassword()));
         student.setRole(Role.STUDENT);
-        student.setEntranceYear(studentRequest.getEntranceYear());
         return student;
     }
     private void chekStudent(Student student,StudentRequest request) {
@@ -110,27 +108,13 @@ public class StudentService implements UniversityServices<StudentRequest, Studen
     private StudentResponse updateStudent(Student student, StudentRequest request) {
         Department department = departmentRepository.findById(request.getDepartmentId())
                 .orElseThrow(() -> new DepartmentNotFoundException());
-        student.setFirstName(request.getFirstName());
-        student.setLastName(request.getLastName());
-        student.setEmail(request.getEmail());
-        student.setStudentNumber(request.getStudentNumber());
+        studentMapper.updateStudentFromRequest(request,student);
         student.setPassword(passwordEncoder.encode(request.getPassword()));
-        student.setEntranceYear(request.getEntranceYear());
         student.setDepartment(department);
         studentRepository.save(student);
-        return studentToResponse(student);
+        return studentMapper.studentToResponse(student);
     }
-    private StudentResponse studentToResponse(Student student) {
-        StudentResponse studentResponse = new StudentResponse();
-        studentResponse.setId(student.getId());
-        studentResponse.setFirstName(student.getFirstName());
-        studentResponse.setLastName(student.getLastName());
-        studentResponse.setStudentNumber(student.getStudentNumber());
-        studentResponse.setEmail(student.getEmail());
-        studentResponse.setDepartmentId(student.getDepartment().getId());
-        studentResponse.setEntranceYear(student.getEntranceYear());
-        return studentResponse;
-    }
+
 }
 
 
