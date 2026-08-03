@@ -6,6 +6,7 @@ import org.example.university.dto.EmployeeResponse;
 import org.example.university.exception.EmployeeAlreadyExistException;
 import org.example.university.exception.EmployeeNotFoundException;
 import org.example.university.exception.UserWithThisEmailExistException;
+import org.example.university.mapper.EmployeeMapper;
 import org.example.university.model.Employee;
 import org.example.university.model.Role;
 import org.example.university.repository.EmployeeRepository;
@@ -18,10 +19,12 @@ import org.springframework.stereotype.Service;
 public class EmployeeService implements  UniversityServices<EmployeeRequest, EmployeeResponse> {
     private final EmployeeRepository employeeRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmployeeMapper employeeMapper;
 
-    public EmployeeService(EmployeeRepository employeeRepository, PasswordEncoder passwordEncoder) {
+    public EmployeeService(EmployeeRepository employeeRepository, PasswordEncoder passwordEncoder, EmployeeMapper employeeMapper) {
         this.employeeRepository = employeeRepository;
         this.passwordEncoder = passwordEncoder;
+        this.employeeMapper = employeeMapper;
     }
 
     @Override
@@ -34,7 +37,7 @@ public class EmployeeService implements  UniversityServices<EmployeeRequest, Emp
         }
         Employee employee = requestToEmployee(request);
         employeeRepository.save(employee);
-        return employeeToResponse(employee);
+        return employeeMapper.toResponse(employee);
     }
 
     @Override
@@ -47,14 +50,10 @@ public class EmployeeService implements  UniversityServices<EmployeeRequest, Emp
                 employeeRepository.existsByEmployeeNumber(request.getEmployeeNumber())) {
             throw new EmployeeAlreadyExistException();
         }
-        employee.setEmail(request.getEmail());
-        employee.setFirstName(request.getFirstName());
-        employee.setLastName(request.getLastName());
-        employee.setEmployeeNumber(employee.getEmployeeNumber());
+        employeeMapper.updateEmployeeFromRequest(request, employee);
         employee.setPassword(passwordEncoder.encode(request.getPassword()));
-        employee.setId(id);
         employeeRepository.save(employee);
-        return employeeToResponse(employee);
+        return employeeMapper.toResponse(employee);
     }
 
     @Override
@@ -66,32 +65,19 @@ public class EmployeeService implements  UniversityServices<EmployeeRequest, Emp
     @Override
     public EmployeeResponse findById(Long id) {
         Employee employee = employeeRepository.findById(id).orElseThrow(EmployeeNotFoundException::new);
-        return employeeToResponse(employee);
+        return employeeMapper.toResponse(employee);
     }
 
     @Override
     public Page<EmployeeResponse> findAll(Pageable pageable) {
         Page<Employee> employees = employeeRepository.findAll(pageable);
-        return employees.map(this::employeeToResponse);
+        return employees.map(employeeMapper::toResponse);
     }
     private Employee requestToEmployee(EmployeeRequest request) {
-        Employee employee = new Employee();
-        employee.setFirstName(request.getFirstName());
-        employee.setLastName(request.getLastName());
-        employee.setEmail(request.getEmail());
+        Employee employee = employeeMapper.toEmployee(request);
         employee.setPassword(passwordEncoder.encode(request.getPassword()));
         employee.setRole(Role.ADMIN);
-        employee.setEmployeeNumber(request.getEmployeeNumber());
         return employee;
-    }
-    private EmployeeResponse employeeToResponse(Employee employee) {
-        EmployeeResponse employeeResponse = new EmployeeResponse();
-        employeeResponse.setId(employee.getId());
-        employeeResponse.setFirstName(employee.getFirstName());
-        employeeResponse.setLastName(employee.getLastName());
-        employeeResponse.setEmail(employee.getEmail());
-        employeeResponse.setEmployeeNumber(employee.getEmployeeNumber());
-        return employeeResponse;
     }
 }
 
