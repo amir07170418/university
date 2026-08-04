@@ -1,5 +1,7 @@
 package org.example.university.service;
 
+import org.example.university.dto.StudentReportDto;
+import org.example.university.dto.StudentReporting;
 import org.example.university.dto.StudentRequest;
 import org.example.university.dto.StudentResponse;
 import org.example.university.exception.DepartmentNotFoundException;
@@ -11,12 +13,17 @@ import org.example.university.model.Department;
 import org.example.university.model.Role;
 import org.example.university.model.Student;
 import org.example.university.repository.DepartmentRepository;
+import org.example.university.repository.EnrollmentRepository;
 import org.example.university.repository.StudentRepository;
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class StudentService implements UniversityServices<StudentRequest, StudentResponse> {
@@ -24,12 +31,14 @@ public class StudentService implements UniversityServices<StudentRequest, Studen
     private final StudentRepository studentRepository;
     private final DepartmentRepository departmentRepository;
     private final StudentMapper studentMapper;
+    private final EnrollmentRepository enrollmentRepository;
 
-    public StudentService(PasswordEncoder passwordEncoder, StudentRepository studentRepository, DepartmentRepository departmentRepository, StudentMapper studentMapper) {
+    public StudentService(PasswordEncoder passwordEncoder, StudentRepository studentRepository, DepartmentRepository departmentRepository, StudentMapper studentMapper, EnrollmentRepository enrollmentRepository) {
         this.passwordEncoder = passwordEncoder;
         this.studentRepository = studentRepository;
         this.departmentRepository = departmentRepository;
         this.studentMapper = studentMapper;
+        this.enrollmentRepository = enrollmentRepository;
     }
 
     @Override
@@ -87,6 +96,14 @@ public class StudentService implements UniversityServices<StudentRequest, Studen
         }
         throw new StudentNotFoundException();
     }
+    public Double getMeAvg(){
+        String email= SecurityContextHolder.getContext().getAuthentication().getName();
+        Student student=studentRepository.findByEmail(email);
+        if (student!=null) {
+            return enrollmentRepository.averageGrade(student.getId());
+        }
+        throw new StudentNotFoundException();
+    }
     private Student requestToStudent(StudentRequest studentRequest) {
         Student student = studentMapper.requestToStudent(studentRequest);
         Department department = departmentRepository.findById(studentRequest.getDepartmentId())
@@ -95,6 +112,23 @@ public class StudentService implements UniversityServices<StudentRequest, Studen
         student.setPassword(passwordEncoder.encode(studentRequest.getPassword()));
         student.setRole(Role.STUDENT);
         return student;
+    }
+    public StudentReporting report(Long id){
+        List<StudentReportDto> studentReports=enrollmentRepository.findByStudentId(id);
+        StudentReporting reporting=new StudentReporting(enrollmentRepository.averageGrade(id),studentReports);
+        return reporting;
+    }
+    public Page<StudentResponse> getStudentsByCourseId(Long id,Pageable pageable){
+        Page<Student> students=enrollmentRepository.findByCourseId(id,pageable);
+        return students.map(studentMapper::studentToResponse);
+    }
+    public Page<StudentResponse> getStudentsByDepartmentId(Long id,Pageable pageable){
+        Page<Student> students=studentRepository.findByDepartmentId(id,pageable);
+        return students.map(studentMapper::studentToResponse);
+    }
+    public Page<StudentResponse> getStudentsOrderdByAvgGrade(Pageable pageable){
+        Page<Student> students=enrollmentRepository.findAllByOrderByGrade(pageable);
+        return students.map(studentMapper::studentToResponse);
     }
     private void chekStudent(Student student,StudentRequest request) {
         if (!student.getEmail().equals(request.getEmail()) && studentRepository.existsByEmail(request.getEmail())) {

@@ -1,13 +1,17 @@
 package org.example.university.controller;
 
 import jakarta.validation.Valid;
+import org.example.university.dto.StudentReporting;
 import org.example.university.dto.StudentRequest;
 import org.example.university.dto.StudentResponse;
 import org.example.university.service.StudentService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/students")
@@ -51,5 +55,25 @@ public class StudentController {
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
         studentService.delete(id);
+    }
+    @PreAuthorize("hasAnyRole('ADMIN','STUDENT')")
+    @GetMapping("/me/avg")
+    public Double averageGrade() {
+        return studentService.getMeAvg();
+    }
+    @PreAuthorize("hasAnyRole('ADMIN','STUDENT')")
+    @GetMapping("/report/{id}")
+    public StudentReporting report(@PathVariable Long id) {
+        return studentService.report(id);
+    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/department/{id}")
+    public Page<StudentResponse> findByDepartment(@PathVariable Long id,Pageable pageable) {
+        return studentService.getStudentsByDepartmentId(id,pageable);
+    }
+    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("/orderd/grade")
+    public Page<StudentResponse> orderdByGrade(Pageable pageable) {
+        return studentService.getStudentsOrderdByAvgGrade(pageable);
     }
 }

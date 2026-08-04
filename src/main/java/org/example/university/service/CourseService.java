@@ -13,6 +13,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class CourseService implements UniversityServices<CourseRequest, CourseResponse> {
     private final CourseRepository courseRepository;
@@ -73,6 +75,10 @@ public class CourseService implements UniversityServices<CourseRequest, CourseRe
     public Page<CourseResponse> findAll(Pageable pageable) {
         Page<Course> coursePage = courseRepository.findAll(pageable);
         return coursePage.map(this::courseToResponse);
+    }
+    public Page<CourseResponse> listCourseByProfessor(Long professorId,Pageable pageable) {
+        Page<Course> courses=courseRepository.findByProfessor(professorId,pageable);
+        return courses.map(this::courseToResponse);
     }
     private CourseResponse courseToResponse(Course course) {
         CourseResponse courseResponse = new CourseResponse();
