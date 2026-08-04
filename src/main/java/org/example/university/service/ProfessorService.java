@@ -1,5 +1,6 @@
 package org.example.university.service;
 
+import jakarta.transaction.Transactional;
 import org.example.university.dto.ProfessorRequest;
 import org.example.university.dto.ProfessorResponse;
 import org.example.university.exception.*;
@@ -28,7 +29,7 @@ public class ProfessorService implements UniversityServices<ProfessorRequest, Pr
         this.departmentRepository = departmentRepository;
         this.professorMapper = professorMapper;
     }
-
+    @Transactional
     @Override
     public ProfessorResponse save(ProfessorRequest request) {
         if (professorRepository.existsByEmail(request.getEmail())) {
@@ -41,7 +42,7 @@ public class ProfessorService implements UniversityServices<ProfessorRequest, Pr
         professorRepository.save(professor);
         return  professorMapper.toResponse(professor);
     }
-
+    @Transactional
     @Override
     public ProfessorResponse update(Long id, ProfessorRequest request) {
         Professor professor = professorRepository.findById(id).orElseThrow(ProfessorNotFoundException::new);
@@ -74,6 +75,7 @@ public class ProfessorService implements UniversityServices<ProfessorRequest, Pr
         }
         throw new ProfessorNotFoundException();
     }
+    @Transactional
     public ProfessorResponse updateMe(ProfessorRequest request){
         String  email = SecurityContextHolder.getContext().getAuthentication().getName();
         Professor professor = professorRepository.findByEmail(email);

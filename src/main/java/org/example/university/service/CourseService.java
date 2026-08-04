@@ -1,5 +1,6 @@
 package org.example.university.service;
 
+import jakarta.transaction.Transactional;
 import org.example.university.dto.CourseRequest;
 import org.example.university.dto.CourseResponse;
 import org.example.university.exception.CourseAlreadyExistExceptions;
@@ -24,7 +25,7 @@ public class CourseService implements UniversityServices<CourseRequest, CourseRe
         this.courseRepository = courseRepository;
         this.professorRepository = professorRepository;
     }
-
+    @Transactional
     @Override
     public CourseResponse save(CourseRequest request) {
         if (courseRepository.existsByCode(request.getCode())) {
@@ -41,7 +42,7 @@ public class CourseService implements UniversityServices<CourseRequest, CourseRe
         courseRepository.save(course);
         return courseToResponse(course);
     }
-
+    @Transactional
     @Override
     public CourseResponse update(Long id, CourseRequest request) {
         Course course=courseRepository.findById(id).orElseThrow(CourseNotFoundException::new);

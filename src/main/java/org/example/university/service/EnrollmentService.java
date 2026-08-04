@@ -1,5 +1,6 @@
 package org.example.university.service;
 
+import jakarta.transaction.Transactional;
 import org.example.university.dto.EmployeeRequest;
 import org.example.university.dto.EnrollmentRequest;
 import org.example.university.dto.EnrollmentResponse;
@@ -28,7 +29,7 @@ public class EnrollmentService  {
         this.professorRepository = professorRepository;
         this.userRepository = userRepository;
     }
-
+    @Transactional
     public EnrollmentResponse save(EnrollmentRequest request) {
         if (enrollmentRepository.existsByCourseIdAndStudentId(request.getCourseId(), request.getStudentId())) {
             throw new EnrollmentAlreadyExistException();
@@ -45,6 +46,7 @@ public class EnrollmentService  {
         enrollmentRepository.save(enrollment);
         return enrollmentToResponse(enrollment);
     }
+    @Transactional
     public EnrollmentResponse saveMe(Long courseId){
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
         Student student=studentRepository.findByEmail(email);
@@ -56,7 +58,7 @@ public class EnrollmentService  {
         enrollmentRequest.setStudentId(student.getId());
         return  save(enrollmentRequest);
     }
-
+    @Transactional
     public void delete(Long id) {
         Enrollment enrollment = enrollmentRepository.findById(id).orElseThrow(EnrollmentNotFoundException::new);
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -93,6 +95,7 @@ public class EnrollmentService  {
         Page<Enrollment> enrollments = enrollmentRepository.findAll(pageable);
         return enrollments.map(this::enrollmentToResponse);
     }
+    @Transactional
     public EnrollmentResponse updateGrade(Long id,Double grade) {
         Enrollment enrollment = enrollmentRepository.findById(id).orElseThrow(EnrollmentNotFoundException::new);
         String username = SecurityContextHolder.getContext().getAuthentication().getName();

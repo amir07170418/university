@@ -1,5 +1,6 @@
 package org.example.university.service;
 
+import jakarta.transaction.Transactional;
 import org.example.university.dto.StudentReportDto;
 import org.example.university.dto.StudentReporting;
 import org.example.university.dto.StudentRequest;
@@ -40,7 +41,7 @@ public class StudentService implements UniversityServices<StudentRequest, Studen
         this.studentMapper = studentMapper;
         this.enrollmentRepository = enrollmentRepository;
     }
-
+    @Transactional
     @Override
     public StudentResponse save(StudentRequest request) {
         if (studentRepository.existsByEmail(request.getEmail())) {
@@ -53,7 +54,7 @@ public class StudentService implements UniversityServices<StudentRequest, Studen
         studentRepository.save(student);
         return studentMapper.studentToResponse(student);
     }
-
+    @Transactional
     @Override
     public StudentResponse update(Long id, StudentRequest request) {
         Student student=studentRepository.findById(id).orElseThrow(()->new StudentNotFoundException());
@@ -87,6 +88,7 @@ public class StudentService implements UniversityServices<StudentRequest, Studen
         }
         throw new StudentNotFoundException();
     }
+    @Transactional
     public StudentResponse updateMe(StudentRequest request) {
         String email= SecurityContextHolder.getContext().getAuthentication().getName();
         Student student=studentRepository.findByEmail(email);

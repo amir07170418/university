@@ -1,5 +1,6 @@
 package org.example.university.service;
 
+import jakarta.transaction.Transactional;
 import org.example.university.dto.EmployeeRequest;
 import org.example.university.dto.EmployeeResponse;
 
@@ -26,7 +27,7 @@ public class EmployeeService implements  UniversityServices<EmployeeRequest, Emp
         this.passwordEncoder = passwordEncoder;
         this.employeeMapper = employeeMapper;
     }
-
+    @Transactional
     @Override
     public EmployeeResponse save(EmployeeRequest request) {
         if (employeeRepository.existsByEmail(request.getEmail())) {
@@ -39,7 +40,7 @@ public class EmployeeService implements  UniversityServices<EmployeeRequest, Emp
         employeeRepository.save(employee);
         return employeeMapper.toResponse(employee);
     }
-
+    @Transactional
     @Override
     public EmployeeResponse update(Long id, EmployeeRequest request) {
         Employee employee = employeeRepository.findById(id).orElseThrow(EmployeeNotFoundException::new);

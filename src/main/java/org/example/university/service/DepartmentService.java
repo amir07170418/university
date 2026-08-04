@@ -1,5 +1,6 @@
 package org.example.university.service;
 
+import jakarta.transaction.Transactional;
 import org.example.university.dto.DepartmentRequest;
 import org.example.university.dto.DepartmentResponse;
 import org.example.university.exception.DepartmentAlreadyExist;
@@ -17,7 +18,7 @@ public class DepartmentService implements UniversityServices<DepartmentRequest, 
     public DepartmentService(DepartmentRepository departmentRepository) {
         this.departmentRepository = departmentRepository;
     }
-
+    @Transactional
     @Override
     public DepartmentResponse save(DepartmentRequest request) {
         if (departmentRepository.existsByName(request.getName())) {
@@ -28,7 +29,7 @@ public class DepartmentService implements UniversityServices<DepartmentRequest, 
         departmentRepository.save(department);
         return departmentToResponse(department);
     }
-
+    @Transactional
     @Override
     public DepartmentResponse update(Long id, DepartmentRequest request) {
         Department department = departmentRepository.findById(id).orElseThrow(DepartmentNotFoundException::new);
