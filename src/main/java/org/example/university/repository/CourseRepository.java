@@ -17,4 +17,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     boolean existsByCode(String code);
     @Query("select c from Course c join c.professor p where p.id=:id")
     Page<Course> findByProfessor(@Param("id") Long id, Pageable pageable);
+    @Query("select count(c)>=5 from Course c where c.professor.id=:id")
+    boolean hasMaxCourse(@Param("id") Long id);
+
 }
