@@ -54,7 +54,7 @@ public class CourseService implements UniversityServices<CourseRequest, CourseRe
         }
         Professor professor = professorRepository.findById(request.getProfessorId())
                 .orElseThrow(ProfessorNotFoundException::new);
-        if (courseRepository.hasMaxCourse(professor.getId())) {
+        if (!course.getProfessor().getId().equals(request.getProfessorId()) && courseRepository.hasMaxCourse(professor.getId())) {
             throw new ProfessorMaxCourseException();
         }
         courseMapper.updateCourseFromRequest(request, course);
