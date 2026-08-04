@@ -100,6 +100,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(createExceptionResponse
                 (HttpStatus.BAD_REQUEST,"user with this email already exist"));
     }
+    @ExceptionHandler(MaximumUnitException.class)
+    public ResponseEntity<ExceptionResponse> handleMaximumUnitException(MaximumUnitException e){
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(createExceptionResponse
+                (HttpStatus.BAD_REQUEST,"maximum unit exceeded"));
+    }
+    @ExceptionHandler(UserWithThisDepartmentExistException.class)
+    public ResponseEntity<ExceptionResponse> handleUserWithThisDepartmentExistException(UserWithThisDepartmentExistException e){
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(createExceptionResponse
+                (HttpStatus.BAD_REQUEST,"user with this department already exist"));
+    }
 
 
 

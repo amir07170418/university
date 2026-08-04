@@ -29,4 +29,6 @@ public interface EnrollmentRepository extends JpaRepository<Enrollment, Long> {
     Page<Student> findAllByOrderByGrade(Pageable pageable);
     @Query("select  new org.example.university.dto.StudentReportDto(c.title,e.grade,c.units) from Enrollment e  join e.course c where e.student.id=:id")
     List<StudentReportDto> findByStudentId(@Param("id") Long id);
+    @Query("select coalesce(sum(c.units),0) from Enrollment e join e.course  c where e.student.id=:id")
+    Integer sumUnits(@Param("id") Long id);
 }

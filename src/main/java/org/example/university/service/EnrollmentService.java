@@ -40,6 +40,8 @@ public class EnrollmentService  {
         Enrollment enrollment = new Enrollment();
         Student student = studentRepository.findById(request.getStudentId()).orElseThrow(StudentNotFoundException::new);
         Course course = courseRepository.findById(request.getCourseId()).orElseThrow(CourseNotFoundException::new);
+        if (enrollmentRepository.sumUnits(student.getId())+course.getUnits()>20)
+            throw new MaximumUnitException();
         enrollment.setCourse(course);
         enrollment.setStudent(student);
         enrollment.setGrade(request.getGrade());

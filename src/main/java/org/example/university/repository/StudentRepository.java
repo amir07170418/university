@@ -20,5 +20,8 @@ public interface StudentRepository extends JpaRepository<Student, Long> {
     boolean existsByStudentNumber(String studentNumber);
     @Query("select s from Student s where s.department.id=:id")
     Page<Student> findByDepartmentId(@Param("id") Long id, Pageable pageable);
+    @Query("select COUNT(s)>0 from Student s where s.department.id=:id")
+    boolean existsByDepartmentId(@Param("id") Long id);
+
 
 }

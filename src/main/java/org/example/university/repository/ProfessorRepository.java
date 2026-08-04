@@ -3,6 +3,8 @@ package org.example.university.repository;
 import org.example.university.model.Professor;
 import org.example.university.model.Student;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -11,4 +13,8 @@ public interface ProfessorRepository extends JpaRepository<Professor, Long> {
     boolean existsByEmail(String email);
     Professor findByProfessorNumber(String professorNumber);
     boolean existsByProfessorNumber(String professorNumber);
+    @Query("select count(p)>0 from Professor p where p.department.id=:id")
+    boolean existsByDepartmentId(@Param("id") Long id);
+    @Query("select count(c)>0 from Course c where c.professor.id=:id")
+    boolean professorHasCourse(@Param("id") Long id);
 }

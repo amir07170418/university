@@ -5,8 +5,11 @@ import org.example.university.dto.DepartmentRequest;
 import org.example.university.dto.DepartmentResponse;
 import org.example.university.exception.DepartmentAlreadyExist;
 import org.example.university.exception.DepartmentNotFoundException;
+import org.example.university.exception.UserWithThisDepartmentExistException;
 import org.example.university.model.Department;
 import org.example.university.repository.DepartmentRepository;
+import org.example.university.repository.ProfessorRepository;
+import org.example.university.repository.StudentRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -14,9 +17,13 @@ import org.springframework.stereotype.Service;
 @Service
 public class DepartmentService implements UniversityServices<DepartmentRequest, DepartmentResponse> {
     private final DepartmentRepository departmentRepository;
+    private final StudentRepository studentRepository;
+    private final ProfessorRepository professorRepository;
 
-    public DepartmentService(DepartmentRepository departmentRepository) {
+    public DepartmentService(DepartmentRepository departmentRepository, StudentRepository studentRepository, ProfessorRepository professorRepository) {
         this.departmentRepository = departmentRepository;
+        this.studentRepository = studentRepository;
+        this.professorRepository = professorRepository;
     }
     @Transactional
     @Override
@@ -45,6 +52,10 @@ public class DepartmentService implements UniversityServices<DepartmentRequest, 
     @Override
     public void delete(Long id) {
         Department department = departmentRepository.findById(id).orElseThrow(DepartmentNotFoundException::new);
+        if (studentRepository.existsByDepartmentId(department.getId()) ||
+                professorRepository.existsByDepartmentId(department.getId())) {
+            throw new UserWithThisDepartmentExistException();
+        }
         departmentRepository.delete(department);
     }
 

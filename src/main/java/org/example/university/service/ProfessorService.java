@@ -53,6 +53,9 @@ public class ProfessorService implements UniversityServices<ProfessorRequest, Pr
     @Override
     public void delete(Long id) {
         Professor  professor = professorRepository.findById(id).orElseThrow(ProfessorNotFoundException::new);
+        if (professorRepository.professorHasCourse(professor.getId())) {
+            throw new  ProfessorHasCourseException();
+        }
         professorRepository.delete(professor);
     }
 
