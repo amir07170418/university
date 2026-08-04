@@ -5,7 +5,9 @@ import org.example.university.dto.CourseRequest;
 import org.example.university.dto.CourseResponse;
 import org.example.university.exception.CourseAlreadyExistExceptions;
 import org.example.university.exception.CourseNotFoundException;
+import org.example.university.exception.ProfessorMaxCourseException;
 import org.example.university.exception.ProfessorNotFoundException;
+import org.example.university.mapper.CourseMapper;
 import org.example.university.model.Course;
 import org.example.university.model.Professor;
 import org.example.university.repository.CourseRepository;
@@ -20,10 +22,12 @@ import java.util.List;
 public class CourseService implements UniversityServices<CourseRequest, CourseResponse> {
     private final CourseRepository courseRepository;
     private final ProfessorRepository professorRepository;
+    private final CourseMapper courseMapper;
 
-    public CourseService(CourseRepository courseRepository, ProfessorRepository professorRepository) {
+    public CourseService(CourseRepository courseRepository, ProfessorRepository professorRepository, CourseMapper courseMapper) {
         this.courseRepository = courseRepository;
         this.professorRepository = professorRepository;
+        this.courseMapper = courseMapper;
     }
     @Transactional
     @Override
@@ -31,16 +35,15 @@ public class CourseService implements UniversityServices<CourseRequest, CourseRe
         if (courseRepository.existsByCode(request.getCode())) {
             throw new CourseAlreadyExistExceptions();
         }
-        Course course = new Course();
         Professor professor = professorRepository.findById(request.getProfessorId())
                 .orElseThrow(ProfessorNotFoundException::new);
-        course.setCode(request.getCode());
-        course.setCapacity(request.getCapacity());
-        course.setTitle(request.getTitle());
-        course.setUnits(request.getUnits());
+        if (courseRepository.hasMaxCourse(professor.getId())) {
+            throw new ProfessorMaxCourseException();
+        }
+        Course course = courseMapper.toCourse(request);
         course.setProfessor(professor);
         courseRepository.save(course);
-        return courseToResponse(course);
+        return courseMapper.toResponse(course);
     }
     @Transactional
     @Override
@@ -51,13 +54,13 @@ public class CourseService implements UniversityServices<CourseRequest, CourseRe
         }
         Professor professor = professorRepository.findById(request.getProfessorId())
                 .orElseThrow(ProfessorNotFoundException::new);
-        course.setTitle(request.getTitle());
-        course.setUnits(request.getUnits());
-        course.setCapacity(request.getCapacity());
+        if (courseRepository.hasMaxCourse(professor.getId())) {
+            throw new ProfessorMaxCourseException();
+        }
+        courseMapper.updateCourseFromRequest(request, course);
         course.setProfessor(professor);
-        course.setCode(request.getCode());
         courseRepository.save(course);
-        return courseToResponse(course);
+        return courseMapper.toResponse(course);
     }
 
     @Override
@@ -69,26 +72,16 @@ public class CourseService implements UniversityServices<CourseRequest, CourseRe
     @Override
     public CourseResponse findById(Long id) {
         Course course=courseRepository.findById(id).orElseThrow(CourseNotFoundException::new);
-        return courseToResponse(course);
+        return courseMapper.toResponse(course);
     }
 
     @Override
     public Page<CourseResponse> findAll(Pageable pageable) {
         Page<Course> coursePage = courseRepository.findAll(pageable);
-        return coursePage.map(this::courseToResponse);
+        return coursePage.map(courseMapper::toResponse);
     }
     public Page<CourseResponse> listCourseByProfessor(Long professorId,Pageable pageable) {
         Page<Course> courses=courseRepository.findByProfessor(professorId,pageable);
-        return courses.map(this::courseToResponse);
-    }
-    private CourseResponse courseToResponse(Course course) {
-        CourseResponse courseResponse = new CourseResponse();
-        courseResponse.setId(course.getId());
-        courseResponse.setCode(course.getCode());
-        courseResponse.setCapacity(course.getCapacity());
-        courseResponse.setTitle(course.getTitle());
-        courseResponse.setUnits(course.getUnits());
-        courseResponse.setProfessorId(course.getProfessor().getId());
-        return courseResponse;
+        return courses.map(courseMapper::toResponse);
     }
 }
